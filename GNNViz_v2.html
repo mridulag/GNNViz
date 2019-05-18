@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  td, th {
+    padding: 1px 4px;
+  }
+
+  body {
+      padding: 10px;
+      font-size: 12px;
+       border-color: blue;
+      display: inline-block;
+    }
+    .well {
+      padding-top: 0px;
+      padding-bottom: 0px;
+      width: 100px;
+      border-color: blue;
+      display: inline-block;
+    }
+    .tables {
+      padding: 10px;
+      font-size: 12px;
+      width: 100px;
+      border-color: blue;
+      display: inline-block;
+    }
+</style>
+<!-- <meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, shrink-to-fit=yes"
+/> -->
+<link
+  rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+  integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+  crossorigin="anonymous"
+/>
+
+<div class="container">
+    <h3>Select k</h3>
+    <div class="row align-items-center">
+      <!-- <div class="col-sm-2"><p id="value-step"></p></div> -->
+      <div class="col-sm"><div id="slider-step"></div></div>
+    </div>
+  </div>
+  <!-- <svg width="960" height="500"></svg> -->
+
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<script>
+  
+  k = 1
+  d3.json('KarateJSON3.json').then(function(graph) {
+nodes = graph["nodes"]
+links = graph["links"]
+//features = graph["features"]
+console.log(nodes)
+  
+var selectedNodeCurrent = 1;
+
+  // Step
+  var data = [1,2,3];
+
+  var sliderStep = d3
+    .sliderBottom()
+    .min(d3.min(data))
+    .max(d3.max(data))
+    .width(300)
+    .tickFormat(d3.format('.0'))
+    .ticks(2)
+    .step(1)
+    .default(1)
+    .on('onchange', val => {
+      k = val
+      console.log(k)
+      console.log("On slider",selectedNodeCurrent)
+      //console.log(selectedNode)
+      selectNode(selectedNodeCurrent)
+      d3.select('p#value-step').text(val); //To update value in the text box
+    });
+
+  var gStep = d3
+    .select('div#slider-step')
+    .append('svg')
+    .attr('width', 500)
+    .attr('height', 100)
+    .append('g')
+    .attr('transform', 'translate(30,30)');
+
+  gStep.call(sliderStep);
+  d3.select('p#value-step').text(sliderStep.value());
+  
+
+function getNeighbors(node) {
+  return links.reduce(function (neighbors, link) {
+       if (link.target.id === node) {
+         n = link.source.id
+        neighbors.push(n)
+      } else if (link.source.id === node) {
+        neighbors.push(link.target.id)
+      }
+      //console.log("out = ",neighbors)
+      return neighbors
+    },
+    [node]
+  )
+}
+
+function gettwolevelneighbors(neighbors) {
+  twolevelneighbors = []
+  //console.log("out = ",neighbors)
+   for (var i = 0; i < neighbors.length; i++) {
+    //console.log(neighbors[i])
+    //console.log(getNeighbors(neighbors[i]))
+    nextneighbors = getNeighbors(neighbors[i])
+    for (var j = 0; j < nextneighbors.length; j++) {
+      if(twolevelneighbors.indexOf(nextneighbors[j]) <= -1 && neighbors.indexOf(nextneighbors[j]) <= -1 )
+        twolevelneighbors.push(nextneighbors[j])
+   }
+  }
+   //console.log("twolevelneighbors = ",twolevelneighbors)
+   return twolevelneighbors
+  }
+
+function isNeighborLink(node, link) {
+  return link.target.id === node.id || link.source.id === node.id
+}
+
+
+function getNodeColor(node, neighbors,twolevelneighbors) {
+  // if (Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1) {
+  //   return node.level === 1 ? 'blue' : 'green'
+  // }
+  //console.log(node.id, neighbors)
+  //console.log(node.id)
+  if (Array.isArray(neighbors) &&  neighbors.indexOf(node.id) > -1) {
+    return 'blue'
+  }
+  else if (k ==2 && Array.isArray(twolevelneighbors) &&  twolevelneighbors.indexOf(node.id) > -1) {
+    //console.log(node.id)
+    return 'red'
+  }
+
+  return 'orange'
+}
+
+
+function getLinkColor(node, link) {
+  return isNeighborLink(node, link) ? 'green' : '#E5E5E5'
+}
+
+function getTextColor(node, neighbors) {
+  return Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1 ? 'green' : 'black'
+}
+
+var width = window.innerWidth*.5
+var height = window.innerHeight*.5
+
+var svg = d3.select('svg')
+svg.attr('width', width).attr('height', height)
+
+// simulation setup with all forces
+var linkForce = d3
+  .forceLink()
+  .id(function (link) { return link.id })
+  .strength(function (link) { return link.strength })
+
+var simulation = d3
+  .forceSimulation()
+  .force('link', linkForce)
+  .force('charge', d3.forceManyBody().strength(-120))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+
+var dragDrop = d3.drag().on('start', function (node) {
+  node.fx = node.x
+  node.fy = node.y
+}).on('drag', function (node) {
+  simulation.alphaTarget(0.7).restart()
+  node.fx = d3.event.x
+  node.fy = d3.event.y
+}).on('end', function (node) {
+  if (!d3.event.active) {
+    simulation.alphaTarget(0)
+  }
+  node.fx = null
+  node.fy = null
+})
+
+function selectNode(selectedNode) {
+   console.log(selectedNode)
+   selectedNodeCurrent = selectedNode
+   console.log(selectedNodeCurrent)
+  
+  
+   //k = getk()
+  var neighbors = getNeighbors(selectedNode.id)
+  //console.log(selectedNode,neighbors)
+  if (k == 2)
+  var twolevelneighbors = gettwolevelneighbors(neighbors)
+
+  // we modify the styles to highlight selected nodes
+  nodeElements.attr('fill', function (node) { 
+    //console.log(node.id,neighbors)
+    if (node == selectedNode)
+     return 'green'
+    else if (neighbors.indexOf(node.id)>-1 || (k==2&&twolevelneighbors.indexOf(node.id)>-1))
+    return getNodeColor(node, neighbors,twolevelneighbors) 
+    else
+    return 'grey'
+  })
+  textElements.attr('fill', function (node) { return getTextColor(node, neighbors) })
+  linkElements.attr('stroke', function (link) { return getLinkColor(selectedNode, link) })
+}
+
+var linkElements = svg.append("g")
+  .attr("class", "links")
+  .selectAll("line")
+  .data(links)
+  .enter().append("line")
+    .attr("stroke-width", 1)
+	  .attr("stroke", "rgba(50, 50, 50, 0.2)")
+
+var nodeElements = svg.append("g")
+  .attr("class", "nodes")
+  .selectAll("circle")
+  .data(nodes)
+  .enter().append("circle")
+    .attr("r", 10)
+    .attr("fill", getNodeColor)
+    .call(dragDrop)
+    .on('click', 
+    selectNode)
+
+    console.log(d3.select(this))
+
+var textElements = svg.append("g")
+  .attr("class", "texts")
+  .selectAll("text")
+  .data(nodes)
+  .enter().append("text")
+    .text(function (node) { return  node.id })
+	  .attr("font-size", 15)
+	  .attr("dx", 15)
+    .attr("dy", 4)
+
+simulation.nodes(nodes).on('tick', () => {
+  nodeElements
+    .attr('cx', function (node) { return node.x })
+    .attr('cy', function (node) { return node.y })
+  textElements
+    .attr('x', function (node) { return node.x })
+    .attr('y', function (node) { return node.y })
+  linkElements
+    .attr('x1', function (link) { return link.source.x })
+    .attr('y1', function (link) { return link.source.y })
+    .attr('x2', function (link) { return link.target.x })
+    .attr('y2', function (link) { return link.target.y })
+})
+
+simulation.force("link").links(links)
+
+
+function tabulate(data, columns) {
+      const header = d3.select('body').append('div').attr('class', 'well');
+    //   header.append('h5').text('Features');
+      var table = d3.select('body').append('table').attr('class','tables');
+      var thead = table.append('thead');
+      var tbody = table.append('tbody');
+
+      // append the header row
+      thead.append('tr')
+        .selectAll('th')
+        .data(columns).enter()
+        .append('th')
+          .text(function (column) { return column; });
+          //console.log(thead)
+
+      // create a row for each object in the data
+      var rows = tbody.selectAll('tr')
+        .data(data)
+        .enter()
+        .append('tr');
+        //console.log(rows)
+
+      // create a cell in each row for each column
+      var cells = rows.selectAll('td')
+        .data(function (row) {
+          return columns.map(function (column) {
+            return {column: column, value: row[column]};
+          });
+        })
+        .enter()
+        .append('td')
+          .text(function (d) { return d.value; });
+          //console.log(cells)
+
+    return table;
+  }
+
+  tabulate(nodes, ['   ','id','   ','f1','f2','f3','f4','f5']);//'h1','h2','h3','h4','h5']);
+  tabulate(nodes, ['   ','id','   ','f1','f2','f3','f4','f5']);
+});
+</script>
