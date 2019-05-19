@@ -38,7 +38,7 @@
 />
 <body>
 <div class="container">
-    <h4>Neighbourhood Aggregation Scheme - Aggegate and Combine</h4>
+    <h4>Neighbourhood Aggregation Scheme - Aggregate and Combine</h4>
     <!-- <div class="row align-items-center"> -->
       <div class="col-sm-2">Select Model Layer
         <!-- - Current Value:
@@ -54,7 +54,7 @@
       <div class="col-lg">
         <svg width="400" height="300" id="graph_network_svg">
         </svg>
-        <div>Select any node in graph or table</div>
+        <div>Select any node in graph or vector table</div>
         <svg width="400" height="200" id="legend">
         </svg>
         
@@ -341,7 +341,7 @@ function tabulate(data) {
 
       var table1 = d3.select('#table1');//.attr('class','tables');
       table1.selectAll('h6').remove();
-      table1.append('h6').text('Node Features Vector (Original)');
+      table1.append('h6').text('Node Feature Vector (Original)');
       table1.select('thead').remove();
       table1.select('tbody').remove();
       var thead1 = table1.append('thead');
@@ -399,10 +399,10 @@ function tabulate(data) {
       else
       columns2 = [' ','id',' ','h21','h22','h23','h24','h25'];
       
-      if (k==2)
-      columns2Labels = [' ','Node',' ','H11','H12','H13','H14','H15'];
-      else
+      if (k>=2)
       columns2Labels = [' ','Node',' ','H21','H22','H23','H24','H25'];
+      else
+      columns2Labels = [' ','Node',' ','H11','H12','H13','H14','H15'];
       
 
       thead2.append('tr')
