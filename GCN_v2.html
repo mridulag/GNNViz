@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  td, th {
+    padding: 1px 4px;
+    text-align: center
+  }
+
+  /* td {
+    padding: 1px 4px;
+    text-align: center
+  } */
+
+  body {
+      padding: 10px;
+      font-size: 12px;
+      border-color: blue;
+      display: inline-block;
+    }
+    .well {
+      padding-top: 0px;
+      padding-bottom: 0px;
+      width: 100px;
+      border-color: blue;
+      display: inline-block;
+    }
+    .tablescls {
+      padding: 10px;
+      font-size: 12px;
+      width: 200px;
+      height: 450px;
+      display: inline-block;
+      margin: auto;
+    }
+
+    .tablescls1 {
+      padding: 10px;
+      font-size: 12px;
+      width: 240px;
+      height: 450px;
+      display: inline-block;
+    }
+
+    .tablescls2 {
+      padding: 10px;
+      font-size: 12px;
+      width: 300px;
+      height: 450px;
+      display: inline-block;
+    }
+</style>
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, shrink-to-fit=yes"
+/>
+<link
+  rel="stylesheet"
+  href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+  integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+  crossorigin="anonymous"
+/>
+<body>
+<div class="container">
+    <!-- <h4>Neighbourhood Aggregation Scheme - Aggregate and Combine</h4> -->
+    <!-- <div class="row align-items-center"> -->
+      <div class="col-sm-2">Select Model Layer
+        <!-- - Current Value:
+        <p id="value-step"></p> -->
+      </div>
+      
+      <!-- <div class="col-sm"> -->
+        <div id="slider-step"></div>
+      <!-- </div> -->
+    <!-- </div> -->
+    
+    <div class="row align">
+      <div class="col-lg-5" style = "overflow: scroll;">
+        <div>Select any node in graph or vector table</div>
+        <svg width="400" height="350" id="graph_network_svg" display= "block", margin="auto" style="text-align:center;">
+        </svg>
+        
+        <!-- <svg width="400" height="200" id="legend"> -->
+        <!-- </svg> -->
+      </div>
+      <div class="col-md-2">
+            <table id="table1" class="tablescls">
+            </table>
+      </div>
+      <div class="col-md-4" style = "overflow: scroll;">
+            <table id="table2" class="tablescls">
+                <!-- <h6>First-level Representation Vector</h6> -->
+            </table>
+      </div>
+      <div class="col-md-1">
+              <table id="table3" class="tablescls">
+              </table>
+      </div>
+    </div>
+
+      <div class="row align">
+
+        <div class="col-md-3">
+          <table id="table11" class="tablescls1">
+          </table>
+        </div>
+
+        <div class="col-md-4" style = "overflow: scroll;">
+          <table id="table4" class="tablescls1">
+          </table>
+        </div>
+
+        <div class="col-md-4">
+            <table id="table5" class="tablescls1">
+            </table>
+        </div>
+
+        <div class="col-md-1">
+            <table id="table10" class="tablescls1">
+            </table>
+        </div>
+
+      </div>  
+
+      <div class="row align">
+
+        <div class="col-md-4">
+            <table id="table6" class="tablescls2">
+            </table>
+        </div>
+
+        <div class="col-md-1">
+            <table id="table7" class="tablescls2">
+            </table>
+        </div>
+
+        <div class="col-md-4">
+            <table id="table8" class="tablescls2">
+            </table>
+        </div>
+
+        <!-- <div class="col-md-3">
+            <table id="table2" class="tablescls2">
+            </table>
+        </div> -->
+ 
+        <div class="col-md-3">
+            <table id="table9" class="tablescls2">
+            </table>
+            <table id="table21" class="tablescls2">
+            </table>
+        </div>
+        
+
+      </div>
+      
+  </div>
+  </body>
+  
+  <script src="https://unpkg.com/d3-simple-slider"></script>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<script>
+
+k = 1
+d3.json('GCN_Mutag_Weights.json').then(function(graph) {
+nodes = graph["nodes"]
+links = graph["links"]
+weights = graph["weights"]
+// console.log(weights)
+
+var selectedNodeCurrent = 1;
+var neighbors;
+var twolevelneighbors;
+var currentnodecolor = 'CornflowerBlue';
+var neighbornodecolor = 'lightSkyBlue';
+var secondneighbornodecolor = 'PaleTurquoise';
+var thirdneighbornodecolor = 'LightCyan';
+var originalnodecolor = 'orange';
+var nonhighlightednodecolor = 'rgb(200,200,200)';
+
+  // Step
+  var data = [1,2];
+
+  var sliderStep = d3
+    .sliderBottom()
+    .min(d3.min(data))
+    .max(d3.max(data))
+    .width(200)
+    .tickFormat(d3.format('.0'))
+    .ticks(1)
+    .step(1)
+    .default(1)
+    .on('onchange', val => {
+      k = val
+      //console.log(selectedNodeCurrent)
+      if(selectedNodeCurrent==1)
+        selectedNodeCurrent = nodes[0]
+        
+      selectNode(selectedNodeCurrent)
+      d3.select('p#value-step').text(val); //To update value in the text box
+    });
+
+  var gStep = d3
+    .select('div#slider-step')
+    .append('svg')
+    .attr('width', 400)
+    .attr('height', 70)
+    .append('g')
+    .attr('transform', 'translate(30,30)');
+
+  gStep.call(sliderStep);
+  d3.select('p#value-step').text(sliderStep.value());
+  
+
+function getNeighbors(node) {
+  return links.reduce(function (neighbors, link) {
+       if (link.target.id === node) {
+         n = link.source.id
+        neighbors.push(n)
+      } else if (link.source.id === node) {
+        neighbors.push(link.target.id)
+      }
+      //console.log("out = ",neighbors)
+      return neighbors
+    },
+    [node]
+  )
+}
+
+function gettwolevelneighbors(neighbors) {
+  twolevelneighbors = []
+  //console.log("out = ",neighbors)
+   for (var i = 0; i < neighbors.length; i++) {
+    //console.log(neighbors[i])
+    //console.log(getNeighbors(neighbors[i]))
+    nextneighbors = getNeighbors(neighbors[i])
+    for (var j = 0; j < nextneighbors.length; j++) {
+      if(twolevelneighbors.indexOf(nextneighbors[j]) <= -1 && neighbors.indexOf(nextneighbors[j]) <= -1 )
+        twolevelneighbors.push(nextneighbors[j])
+   }
+  }
+   //console.log("twolevelneighbors = ",twolevelneighbors)
+   return twolevelneighbors
+  }
+
+  function getthirdlevelneighbors(neighbors,twolevelneighbors) {
+  threelevelneighbors = []
+  for (var i = 0; i < twolevelneighbors.length; i++) {
+    nextneighbors = getNeighbors(twolevelneighbors[i])
+    //console.log("nextneighbors",nextneighbors)
+    for (var j = 0; j < nextneighbors.length; j++) {
+      if(threelevelneighbors.indexOf(nextneighbors[j]) <= -1 
+      && twolevelneighbors.indexOf(nextneighbors[j]) <= -1 
+      && neighbors.indexOf(nextneighbors[j]) <= -1 )
+      threelevelneighbors.push(nextneighbors[j])
+   }
+  }
+  //console.log(threelevelneighbors)
+  return threelevelneighbors
+  }
+
+
+function isNeighborLink(node, link) {
+  return link.target.id === node.id || link.source.id === node.id
+}
+
+
+function getNodeColor(node, neighbors,twolevelneighbors,threelevelneighbors) {
+  if (Array.isArray(neighbors) &&  neighbors.indexOf(node.id) > -1)
+    return neighbornodecolor
+  
+  else if (k >=2 && Array.isArray(twolevelneighbors) &&  twolevelneighbors.indexOf(node.id) > -1)
+    return secondneighbornodecolor
+  
+  else if (k >=3 && Array.isArray(threelevelneighbors) &&  threelevelneighbors.indexOf(node.id) > -1)
+    return thirdneighbornodecolor
+
+  return originalnodecolor
+}
+
+
+function getLinkColor(node, link) {
+  return isNeighborLink(node, link) ? 'black' : 'grey'
+}
+
+function getTextColor(node, neighbors) {
+  return Array.isArray(neighbors) && neighbors.indexOf(node.id) > -1 ? 'black' : 'grey'
+}
+
+ var width = window.innerWidth*.5
+ var height = window.innerHeight*.8
+
+var svg = d3.select('#graph_network_svg')
+//svg.attr('width', width).attr('height', height)
+
+// simulation setup with all forces
+var linkForce = d3
+  .forceLink()
+  .id(function (link) { return link.id })
+  .strength(function (link) { return link.strength })
+
+var simulation = d3
+  .forceSimulation()
+  .force('link', linkForce)
+  .force('charge', d3.forceManyBody().strength(-120))
+  .force('center', d3.forceCenter(width/4, height/4))
+
+var dragDrop = d3.drag().on('start', function (node) {
+  node.fx = node.x
+  node.fy = node.y
+}).on('drag', function (node) {
+  simulation.alphaTarget(0.7).restart()
+  node.fx = d3.event.x
+  node.fy = d3.event.y
+}).on('end', function (node) {
+  if (!d3.event.active) {
+    simulation.alphaTarget(0)
+  }
+  node.fx = null
+  node.fy = null
+})
+
+function selectNode(selectedNode) {
+  // console.log(selectedNode)
+  selectedNodeCurrent = selectedNode
+  neighbors = getNeighbors(selectedNode.id)
+  //threelevelneighbors=[]
+  //console.log(selectedNode,neighbors)
+  if (k==2)
+  twolevelneighbors = gettwolevelneighbors(neighbors)
+  else if (k>=3)
+    threelevelneighbors = getthirdlevelneighbors(neighbors,twolevelneighbors);
+    
+  // we modify the styles to highlight selected nodes
+  nodeElements.attr('fill', function (node) { 
+    // console.log(node)
+    if (node == selectedNode)
+      return currentnodecolor
+    else if (neighbors.indexOf(node.id)>-1 || (k>=2&&twolevelneighbors.indexOf(node.id)>-1))//|| (k>=3&&threelevelneighbors.indexOf(node.id)>-1))
+       return getNodeColor(node, neighbors,twolevelneighbors)//,threelevelneighbors) 
+    else if (k>=3&&threelevelneighbors.indexOf(node.id)>-1)
+      return getNodeColor(node, neighbors,twolevelneighbors,threelevelneighbors) 
+    else
+      return nonhighlightednodecolor;
+  })
+  textElements.attr('fill', function (node) { return getTextColor(node, neighbors) })
+  linkElements.attr('stroke', function (link) { return getLinkColor(selectedNode, link) })
+  
+  tabulate(nodes);
+  tabulateW(weights);
+    
+}
+
+var linkElements = svg.append("g")
+  .attr("class", "links")
+  .selectAll("line")
+  .data(links)
+  .enter().append("line")
+    .attr("stroke-width", 1)
+	  .attr("stroke", "rgba(50, 50, 50, 0.2)")
+
+var nodeElements = svg.append("g")
+  .attr("class", "nodes")
+  .selectAll("circle")
+  .data(nodes)
+  .enter().append("circle")
+    .attr("r", 7)
+    .attr("fill",getNodeColor)
+    .call(dragDrop)
+    .on('click',selectNode)
+    .style("stroke", 'grey')
+
+    //console.log(d3.select(this))
+
+var textElements = svg.append("g")
+  .attr("class", "texts")
+  .selectAll("text")
+  .data(nodes)
+  .enter().append("text")
+    .text(function (node) { return  node.id })
+	  .attr("font-size", 15)
+	  .attr("dx", 15)
+    .attr("dy", 4)
+
+simulation.nodes(nodes).on('tick', () => {
+  nodeElements
+    .attr('cx', function (node) { return node.x })
+    .attr('cy', function (node) { return node.y })
+  textElements
+    .attr('x', function (node) { return node.x })
+    .attr('y', function (node) { return node.y })
+  linkElements
+    .attr('x1', function (link) { return link.source.x })
+    .attr('y1', function (link) { return link.source.y })
+    .attr('x2', function (link) { return link.target.x })
+    .attr('y2', function (link) { return link.target.y })
+})
+simulation.force("link").links(links);
+
+var color = d3.scaleOrdinal(d3.schemeCategory10);
+var legend = svg.select("#legend")
+    .data(color.domain())
+    .enter().append("g")
+    //.attr("class", "legend")
+    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+legend.append("rect")
+    .attr("x", width - 18)
+    .attr("width", 18)
+    .attr("height", 18)
+    .style("fill", color);
+
+legend.append("text")
+    .attr("x", width - 24)
+    .attr("y", 9)
+    .attr("dy", ".35em")
+    .style("text-anchor", "end")
+    .text(function(d) { return d; });
+
+      
+function tabulate(data) {
+
+      var table1 = d3.selectAll('#table1');//.attr('class','tables');
+      table1.selectAll('h6').remove();
+      table1.append('h6').text('Node Feature Vector (Based on degree)');
+      table1.select('thead').remove();
+      table1.select('tbody').remove();
+      var thead1 = table1.append('thead');
+      var tbody1 = table1.append('tbody');
+      
+      columns1 = [' ','id',' ','f1','f2','f3'];
+      columnsLabel = [' ','Node',' ','F1','F2','F3'];
+
+      thead1.append('tr')
+        .selectAll('th')
+        .data(columnsLabel).enter()
+        .append('th')
+          .text(function (column) { return column; });
+      
+      // tbody1.selectAll('tr').remove();
+      var rows1 = tbody1.selectAll('tr')
+        .data(data)
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            if (k ==1 && data.id == selectedNodeCurrent.id)
+                return currentnodecolor;
+            else if (k ==1 && Array.isArray(neighbors) &&  neighbors.indexOf(data.id) > -1)
+                return neighbornodecolor;
+            })
+            .on('click', selectNode);  
+            
+          // create a cell in each row for each column
+          var cells1 = rows1.selectAll('td')
+            .data(function (row) {
+              return columns1.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { return d.value; });
+             // tbody1.selectAll('tr').remove();
+
+      var table2 = d3.selectAll('#table2');//.attr('class','tables');
+      table2.select('h6').remove();
+      if (k>2)
+      table2.append('h6').text('Second-level Representation Vector');
+      else
+      table2.append('h6').text('First-level Representation Vector');
+      
+      table2.select('thead').remove();
+      table2.select('tbody').remove();
+      var thead2 = table2.append('thead');
+      var tbody2 = table2.append('tbody');
+      
+      if (k>2)
+      columns2 = [' ','id',' ','h21','h22','h23'];
+      else
+      columns2 = [' ','id',' ','h11','h12','h13','h14','h15','h16','h17'];
+      
+      if (k>2)
+      columns2Labels = [' ','Node',' ','H21','H22','H23'];
+      else
+      columns2Labels = [' ','Node',' ','H11','H12','H13','H14','H15','H16','H17'];
+      
+
+      thead2.append('tr')
+        .selectAll('th')
+        .data(columns2Labels).enter()
+        .append('th')
+          .text(function (column) { return column; });
+      
+      var rows2 = tbody2.selectAll('tr')
+        .data(data)
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            if (data.id == selectedNodeCurrent.id)
+                return currentnodecolor;
+            else if (k>=2 && Array.isArray(neighbors) && neighbors.indexOf(data.id) > -1)
+                return neighbornodecolor;
+            else if (k>=2 && neighbors.indexOf(data.id)>-1 || (k>=2 && twolevelneighbors.indexOf(data.id)>-1))
+                return secondneighbornodecolor;
+            else if (k>=3 && threelevelneighbors.indexOf(data.id)>-1)
+                return thirdneighbornodecolor;
+          })
+            .on('click', selectNode);  
+                 
+          // create a cell in each row for each column
+          var cells2 = rows2.selectAll('td')
+            .data(function (row) {
+              return columns2.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { return d.value; });
+        
+        
+        
+        if (k==1)
+        {     
+
+        var table11 = d3.select('#table11');
+        table11.select('thead').remove();
+        table11.select('tbody').remove();
+        table11.selectAll('h6').remove();
+
+        table11
+          .append('h6').text('Feature Vector FV')
+          .append('h6').text('(17*3)');
+        var thead11 = thead1.node().cloneNode(true);
+        var tbody11 = tbody1.node().cloneNode(true);
+        
+        table11.node().appendChild(thead11);
+        table11.node().appendChild(tbody11);
+        }
+        else
+        {
+          var table11 = d3.selectAll('#table11');//.attr('class','tables');
+      table11.select('h6').remove();
+      table11.append('h6').text('First-level Representation Vector FV1 (17*7)');
+      
+      table11.select('thead').remove();
+      table11.select('tbody').remove();
+      var thead2 = table11.append('thead');
+      var tbody2 = table11.append('tbody');
+      
+      columns2 = [' ','id',' ','h11','h12','h13','h14','h15','h16','h17'];
+      columns2Labels = [' ','Node',' ','H11','H12','H13','H14','H15','H16','H17'];
+      
+
+      thead2.append('tr')
+        .selectAll('th')
+        .data(columns2Labels).enter()
+        .append('th')
+          .text(function (column) { return column; });
+      
+      var rows2 = tbody2.selectAll('tr')
+        .data(data)
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            if (data.id == selectedNodeCurrent.id)
+                return currentnodecolor;
+            else if (k>=2 && Array.isArray(neighbors) && neighbors.indexOf(data.id) > -1)
+                return neighbornodecolor;
+            
+          });
+            //.on('click', selectNode);  
+                 
+          // create a cell in each row for each column
+          var cells2 = rows2.selectAll('td')
+            .data(function (row) {
+              return columns2.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { return d.value; });
+        
+       
+        }
+
+        
+  //console.log("k= ",k)
+  if (k==1)
+  {
+
+    var table3 = d3.select('#table3');
+    table3.select('thead').remove();
+    table3.select('tbody').remove();
+    table3.select('h6').remove();
+        
+  }
+  if(k>=2)
+  {
+      var table3 = d3.select('#table3');
+      table3.select('h6').remove();
+      if (k==2)
+        table3.append('h6').text('Second-level Representation Vector');
+      else
+        table3.append('h6').text('Third-level Representation Vector');
+
+      table3.select('thead').remove();
+      table3.select('tbody').remove();
+      var thead3 = table3.append('thead');
+      var tbody3 = table3.append('tbody');
+      
+      if (k==2)
+        columns3 = [' ','id',' ','h21','h22','h23'];
+      else
+        columns3 = [' ','id',' ','h31','h32','h33','h34','h35'];
+      
+      if (k==2)
+      columns3Labels = [' ','Node',' ','H21','H22','H23'];
+      else
+      columns3Labels = [' ','Node',' ','H31','H32','H33','H34','H35'];
+      
+
+      thead3.append('tr')
+        .selectAll('th')
+        .data(columns3Labels).enter()
+        .append('th')
+          .text(function (column) { return column; });
+
+      // tbody1.selectAll('tr').remove();
+      var rows3 = tbody3.selectAll('tr')
+        .data(data)
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            
+            if (data.id == selectedNodeCurrent.id)
+                return currentnodecolor;
+            // else if (k==2 && Array.isArray(neighbors) &&  neighbors.indexOf(data.id) > -1)
+            //     return neighbornodecolor;//'rgb(0,0,20)'
+            })
+            .on('click', selectNode);  
+             
+          // create a cell in each row for each column
+          var cells3 = rows3.selectAll('td')
+            .data(function (row) {
+              return columns3.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { return d.value; });
+      }
+
+      var table21 = d3.select('#table21');
+        table21.select('thead').remove();
+        table21.select('tbody').remove();
+        table21.selectAll('h6').remove();
+        if (k==1)
+        {     
+        table21
+          .append('h6').text('Step 5 - Relu on BR1')
+          .append('h6').text('First-level Representation Vector -> FV1 (17*3)');
+        var thead21 = thead2.node().cloneNode(true);
+        var tbody21 = tbody2.node().cloneNode(true);
+       
+        }
+        else
+        {
+        table21
+          .append('h6').text('Step 5 - Relu on BR2')
+          .append('h6').text('Second-level Representation Vector -> FV2 (17*3)');
+          // console.log(thead3)
+        var thead21 = thead3.node().cloneNode(true);
+        var tbody21 = tbody3.node().cloneNode(true);
+        }
+
+        table21.node().appendChild(thead21)
+        table21.node().appendChild(tbody21);
+      
+
+      var table5 = d3.selectAll('#table5');//.attr('class','tables');
+      table5.selectAll('h6').remove();
+      if(k == 1){
+          table5
+          .append('h6').text('Step 1: FV * Weights1 -> FM1 ')
+          .append('h6').text('(17*7)');
+        }
+      else{
+          table5
+          .append('h6').text('Step 1: FV1 * Weights2 -> FM2 (17*3)');
+          // .append('h6').text('(17*3)');
+        }
+      
+      table5.select('thead').remove();
+      table5.select('tbody').remove();
+      var thead5 = table5.append('thead');
+      var tbody5 = table5.append('tbody');
+      
+      if(k == 1)
+          {
+          columns5 = [' ','id',' ','fw11','fw12','fw13','fw14','fw15','fw16','fw17'];
+          columnsLabel = [' ','Node',' ','F1','F2','F3','F4','F5','F6','F7'];
+          }
+      else
+        {
+          columns5 = [' ','id',' ','fw21','fw22','fw23'];
+          columnsLabel = [' ','Node',' ','F1','F2','F3'];
+        }
+      
+      // columnsLabel = [' ','Node',' ','F1','F2','F3','F4','F5','F6','F7'];
+      
+      console.log(data)
+
+      thead5.append('tr')
+        .selectAll('th')
+        .data(columnsLabel).enter()
+        .append('th')
+          .text(function (column) { return column; });
+      
+      // tbody1.selectAll('tr').remove();
+      var rows5 = tbody5.selectAll('tr')
+        .data(data)
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            if (data.id == selectedNodeCurrent.id)
+                return currentnodecolor;
+            else if (Array.isArray(neighbors) &&  neighbors.indexOf(data.id) > -1)
+                return neighbornodecolor;
+            });
+            //.on('click', selectNode);  
+            
+          // create a cell in each row for each column
+          var cells5 = rows5.selectAll('td')
+            .data(function (row) {
+              return columns5.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { return d.value; });
+             // tbody1.selectAll('tr').remove();
+
+      //console.log(data)
+      var table9 = d3.selectAll('#table9');//.attr('class','tables');
+      table9.selectAll('h6').remove();
+      
+      if(k == 1){
+          table9
+          .append('h6').text('Step 4  - Aggregation over neighbours on NM1 -> BR1 (17*7) ')
+          // .append('h6').text('(17*7)');
+        }
+      else{
+          table9
+          .append('h6').text('Step 4  - Aggregation over neighbours on NM2 -> BR2 (17*3)')
+          // .append('h6').text('(17*3)');
+        }
+      // table9.append('h6').text('Step 4  - Aggregation over neighbours on NM1 -> BR1 (17*3)');
+      table9.select('thead').remove();
+      table9.select('tbody').remove();
+      var thead9 = table9.append('thead');
+      var tbody9 = table9.append('tbody');
+      
+
+      if(k == 1)
+      {
+        columns9 = [' ','id',' ','br11','br12','br13','br14','br15','br16','br17'];
+        columnsLabel = [' ','Node',' ','F1','F2','F3','F4','F5','F6','F7'];
+      }
+      else
+      {
+        columns9 = [' ','id',' ','br21','br22','br23'];
+        columnsLabel = [' ','Node',' ','F1','F2','F3',];
+      }
+          
+      
+      thead9.append('tr')
+        .selectAll('th')
+        .data(columnsLabel).enter()
+        .append('th')
+          .text(function (column) { return column; });
+      
+      // tbody1.selectAll('tr').remove();
+      var rows9 = tbody9.selectAll('tr')
+        .data(data)
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            if (data.id == selectedNodeCurrent.id)
+                return currentnodecolor;
+            });
+            //.on('click', selectNode);  
+            
+          // create a cell in each row for each column
+          var cells9 = rows9.selectAll('td')
+            .data(function (row) {
+              return columns9.map(function (column) {
+                return {column: column, value: row[column]};
+              });
+            })
+            .enter()
+            .append('td')
+              .text(function (d) { 
+                return d.value; });
+
+
+   }
+
+function tabulateW(data) 
+{
+      //Weights started
+      // console.log(data)
+      var table4 = d3.selectAll('#table4');
+      table4.selectAll('h6').remove();
+      // table4.append('h6').text(
+      //   //console.log()
+      //   function (){
+      //     if(k == 1)
+      //     return "Weight1 (3*17)"
+      //     else
+      //     return "Weight2 (7*3)"
+      //     });
+      if(k == 1){
+          table4
+          .append('h6').text('GCN Conv Layer1 Weights')
+          .append('h6').text('(3*17)');
+        }
+      else{
+          table4
+          .append('h6').text('GCN Conv Layer2 Weights')
+          .append('h6').text('(7*3)');
+        }
+      
+      table4.select('thead').remove();
+      table4.select('tbody').remove();
+      var thead1 = table4.append('thead');
+      var tbody1 = table4.append('tbody');
+      
+      thead1.append('tr')
+        .selectAll('th')
+        .data(" ").enter()
+        .append('th')
+          .text("-")
+          .style("color","white");
+          // .attr("dy", "1em");
+
+      // console.log(data.conv1)
+      var rows1 = tbody1.selectAll('tr')
+        .data( 
+          function (){
+          //console.log(data.conv1)
+          if(k == 1)
+          return data.conv1
+          else
+          return data.conv2
+          })
+        .enter()
+          .append('tr');
+
+          // create a cell in each row for each column
+          var cells1 = rows1.selectAll('td')
+            .data(
+              function(data){
+                  // console.log(data)
+                  return data
+                  })
+            .enter()
+            .append('td')
+            .text(
+              function(data){
+                  // console.log(data)
+                  return data
+              });
+
+
+
+    // console.log(data)
+      var table6 = d3.selectAll('#table6');
+      table6.selectAll('h6').remove();
+      // table6.append('h6').text(
+      //   //console.log()
+      //   function (){
+      //     if(k == 1)
+      //     return "Step 2 (Expanded FM1 -> EM1)"
+      //     else
+      //     return "Step 2 (Expanded FM2 -> EM2)"
+      //     });
+      if(k == 1){
+          table6
+          .append('h6').text('Step 2: Expanded FM1 -> EM1')
+          .append('h6').text('(38*7)');
+        }
+      else{
+          table6
+          .append('h6').text('Step 2: Expanded FM2 -> EM2')
+          .append('h6').text('(38*3)');
+        }
+      table6.select('thead').remove();
+      table6.select('tbody').remove();
+      var thead6 = table6.append('thead');
+      var tbody6 = table6.append('tbody');
+      
+      thead6.append('tr')
+        .selectAll('th')
+        .data(
+          function (){
+          if(k == 1)
+          return data.EM_header
+          else
+          return data.EM2_header
+          }
+          ).enter()
+        .append('th')
+          .text(function (column) { return column; });
+
+      var test = []
+      // console.log(data.EM)
+      var rows1 = tbody6.selectAll('tr')
+        .data( 
+          function (){
+          //console.log(data.conv1)
+          if(k == 1)
+          return data.EM
+          else
+          return data.EM2
+          })
+        .enter()
+        .append('tr')
+        .attr("bgcolor",
+        function (data) { 
+          node = data[0].toString();
+          if (node == selectedNodeCurrent.id && test.indexOf(node)==-1)
+              {
+              test.push(node);
+              return currentnodecolor;
+              }
+          else if (Array.isArray(neighbors) && neighbors.indexOf(node) > -1  && test.indexOf(node)==-1) //k>=2 && 
+              { 
+              test.push(node);
+              return neighbornodecolor;
+              }});
+        
+
+          // create a cell in each row for each column
+          var cells1 = rows1.selectAll('td')
+            .data(
+              function(data){
+                  // console.log(data)
+                  return data
+                  })
+            .enter()
+            .append('td')
+            .text(
+              function(data){
+                  // console.log(data)
+                  return Math.round(data * 1000) / 1000
+              });
+
+      var table7 = d3.selectAll('#table7');
+      table7.selectAll('h6').remove();
+      table7.append('h6').text(
+        //console.log()
+        function (){
+          if(k == 1)
+          return "Norm1"
+          else
+          return "Norm2"
+          });
+        // .append('h6').text(' ')
+        // .append('h6').text(' ');
+      table7.select('thead').remove();
+      table7.select('tbody').remove();
+      var thead7 = table7.append('thead');
+      var tbody7 = table7.append('tbody');
+            // console.log(data.EM)
+
+      thead7.append('tr')
+        .selectAll('th')
+        .data(" ").enter()
+        .append('th')
+          .text("--")
+          .style("color","white");
+
+      var rows1 = tbody7.selectAll('tr')
+        .data( 
+          function (){
+          //console.log(data.conv1)
+          if(k == 1)
+          return data.norm
+          else
+          return data.norm
+          })
+        .enter()
+          .append('tr');
+
+          // create a cell in each row for each column
+          var cells1 = rows1.selectAll('td')
+            .data(
+              function(data){
+                  // console.log(data)
+                  return data
+                  })
+            .enter()
+            .append('td')
+            .text(
+              function(data){
+                  // console.log(data)
+                  return Math.round(data * 100) / 100
+              });
+
+      var table8 = d3.selectAll('#table8');
+      table8.selectAll('h6').remove();
+      // table8.append('h6').text(
+      //   //console.log()
+      //   function (){
+      //     if(k == 1)
+      //     return "Step 3 (EM1 * Norm1 -> NM1)"
+      //     else
+      //     return "Step 3 (EM2 * Norm2 -> NM2)"
+      //     });
+      if(k == 1){
+        table8
+          .append('h6').text('Step 3: EM1 * Norm1 -> NM1')
+          .append('h6').text('(38*7)');
+        }
+      else{
+        table8
+          .append('h6').text('Step 3: EM2 * Norm2 -> NM2')
+          .append('h6').text('(38*3)');
+        }
+      
+      
+      // var table8 = d3.selectAll('#table8');
+      table8.select('thead').remove();
+      table8.select('tbody').remove();
+      var thead8 = table8.append('thead');
+      var tbody8 = table8.append('tbody');
+      
+      thead8.append('tr')
+        .selectAll('th')
+        .data(
+          function (){
+          if(k == 1)
+          return data.NM_header
+          else
+          return data.NM2_header
+          }).enter()
+        .append('th')
+          .text(function (column) { return column; });
+      
+      var test = [];
+      // console.log(data.NM)
+      var rows1 = tbody8.selectAll('tr')
+        .data( 
+          function (){
+          //console.log(data.conv1)
+          if(k == 1)
+          return data.NM
+          else
+          return data.NM2
+          })
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            node = data[0].toString();
+            if (node == selectedNodeCurrent.id && test.indexOf(node)==-1)
+                {
+                test.push(node);
+                return currentnodecolor;
+                }
+            else if (Array.isArray(neighbors) && neighbors.indexOf(node) > -1  && test.indexOf(node)==-1) //k>=2 && 
+                { 
+                test.push(node);
+                return neighbornodecolor;
+                }});
+            // .on('click', selectNode);
+          
+
+          // create a cell in each row for each column
+          var cells1 = rows1.selectAll('td')
+            .data(
+              function(data){
+                  // console.log(data)
+                  return data
+                  })
+            .enter()
+            .append('td')
+            .text(
+              function(data){
+                  // console.log(data)
+                  return Math.round(data * 100) / 100
+              });
+
+
+      var table10 = d3.selectAll('#table10');
+      table10.select('thead').remove();
+      table10.select('tbody').remove();
+      table10.selectAll('h6').remove();
+      table10.append('h6').text("Adjacency List (AL)");
+      var thead10 = table10.append('thead');
+      var tbody10 = table10.append('tbody');
+      
+      thead10.append('tr')
+        .selectAll('th')
+        .data(" ").enter()
+        .append('th')
+          .text("-")
+          .style("color","white");
+
+      thead10.append('tr')
+        .selectAll('th')
+        .data(data.Adj_matrix_header).enter()
+        .append('th')
+          .text(function (column) { return column; });
+
+      // console.log(data.Adj_matrix)
+      var rows1 = tbody10.selectAll('tr')
+        .data( 
+          function (){
+          //console.log(data.conv1)
+          if(k == 1)
+          return data.Adj_matrix
+          else
+          return data.Adj_matrix
+          })
+        .enter()
+          .append('tr')
+          .attr("bgcolor",
+          function (data) { 
+            // console.log(data[0])
+            node = data[0].toString();
+            if (node == selectedNodeCurrent.id)
+                return currentnodecolor;    
+                });
+
+          // create a cell in each row for each column
+          var cells1 = rows1.selectAll('td')
+            .data(
+              function(data){
+                  return data
+                  })
+            .enter()
+            .append('td')
+            .text(
+              function(data){
+                  // console.log(data)
+                  return data
+              })
+            .style("text-align", "left");
+
+
+
+   }
+});
+</script>
