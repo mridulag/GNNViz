@@ -163,7 +163,7 @@
 <script>
 
 k = 1
-d3.json('GCN_Mutag_Weights.json').then(function(graph) {
+d3.json('GNN_Mutag_Weights.json').then(function(graph) {
 nodes = graph["nodes"]
 links = graph["links"]
 weights = graph["weights"]
@@ -832,12 +832,12 @@ function tabulateW(data)
       //     });
       if(k == 1){
           table4
-          .append('h6').text('GCN Conv Layer1 Weights')
+          .append('h6').text('GNN Conv Layer1 Weights')
           .append('h6').text('(3*17)');
         }
       else{
           table4
-          .append('h6').text('GCN Conv Layer2 Weights')
+          .append('h6').text('GNN Conv Layer2 Weights')
           .append('h6').text('(7*3)');
         }
       
